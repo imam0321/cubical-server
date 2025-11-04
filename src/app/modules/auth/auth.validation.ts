@@ -1,7 +1,5 @@
 import z from "zod";
 
-const phoneRegex = /^\+?[1-9]\d{1,14}$/;
-
 export const createOrganizationValidation = z.object({
   name: z
     .string()
@@ -16,8 +14,8 @@ export const createOrganizationValidation = z.object({
     .min(8, { message: "Password must be at least 8 characters." }),
   phone: z
     .string()
-    .refine((v) => !v || phoneRegex.test(v), {
-      message: "Invalid phone number format.",
+    .regex(/^[0-9+\-() ]{5,25}$/, {
+      message: "Invalid phone number.",
     }),
   address: z.string().min(1, { message: "Address required" }).max(250),
   website: z

@@ -6,6 +6,10 @@ import { fileUploader } from "../../config/cloudinary.config";
 
 const router = Router();
 
-router.post("/", fileUploader.upload.single("file"), validateRequest(createOrganizationValidation), AuthController.createOrganization);
+router.post("/",
+  fileUploader.upload.single("file"),
+  validateRequest(createOrganizationValidation),
+  AuthController.createOrganization
+);
 
 export const AuthRoutes = router;

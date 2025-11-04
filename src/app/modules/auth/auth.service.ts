@@ -21,7 +21,7 @@ const createOrganization = async (payload: Partial<Organization> & { logoFile?: 
 
   let logoUrl: string = "";
 
-  if (payload.logoFile) {
+  if (payload.logoFile && !isUserExist) {
     const uploadResult = await fileUploader.uploadToCloudinary(payload.logoFile);
     logoUrl = uploadResult.secure_url
   }
