@@ -1,51 +1,79 @@
 /* eslint-disable no-console */
 import multer from "multer";
-import path from "path";
-import fs from "fs/promises"
-import { v2 as cloudinary } from "cloudinary"
+import { v2 as cloudinary, UploadApiResponse } from "cloudinary"
 import { envVars } from "../config/env"
 import AppError from "../errorHelpers/AppError"
 import httpStatus from "http-status-codes"
+import { Readable } from "stream";
 
+cloudinary.config({
+  cloud_name: envVars.CLOUDINARY.CLOUDINARY_CLOUD_NAME,
+  api_key: envVars.CLOUDINARY.CLOUDINARY_CLOUD_API_KEY,
+  api_secret: envVars.CLOUDINARY.CLOUDINARY_CLOUD_API_SECRET
+});
 
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(process.cwd(), "/uploads"))
+const storage = multer.memoryStorage();
+
+// Multer upload configuration with validation
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024
   },
-  filename: function (req, file, cb) {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, `${file.fieldname}-${uniqueSuffix}${path.extname(file.originalname)}`);
+  fileFilter: (req, file, cb) => {
+    const allowedMimeTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
+
+    if (allowedMimeTypes.includes(file.mimetype)) {
+      cb(null, true)
+    } else {
+      cb(new Error("'Only image files (JPEG, PNG, GIF, WebP) are allowed!'"))
+    }
   }
 });
 
-const upload = multer({ storage: storage });
-
-const uploadToCloudinary = async (file: Express.Multer.File) => {
-  cloudinary.config({
-    cloud_name: envVars.CLOUDINARY.CLOUDINARY_CLOUD_NAME,
-    api_key: envVars.CLOUDINARY.CLOUDINARY_CLOUD_API_KEY,
-    api_secret: envVars.CLOUDINARY.CLOUDINARY_CLOUD_API_SECRET
-  });
-
-  if (!file?.path) throw new AppError(httpStatus.NOT_FOUND, "No file path found for upload");
+// Upload to Cloudinary
+const uploadToCloudinary = async (file: Express.Multer.File): Promise<UploadApiResponse> => {
+  if (!file?.buffer) throw new AppError(httpStatus.NOT_FOUND, "No file path found for upload");
 
   try {
-    const result = await cloudinary.uploader.upload(file.path, {
-      folder: "cubical",
-      public_id: file.filename,
+    const result = await new Promise<UploadApiResponse>((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder: "cubical",
+          resource_type: "auto"
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result as UploadApiResponse)
+        }
+      );
+
+      const bufferStream = Readable.from(file.buffer);
+      bufferStream.pipe(uploadStream);
     });
 
     return result;
   } catch (error) {
     console.error("Cloudinary upload failed:", error);
     throw new AppError(httpStatus.BAD_REQUEST, "Failed to upload file to Cloudinary");
-  } finally {
-    await fs.unlink(file.path);
   }
 };
+
+const deleteFromCloudinary = async (publicId: string): Promise<void> => {
+  try {
+    await cloudinary.uploader.destroy(publicId);
+  } catch (error) {
+    console.error("Cloudinary delete failed:", error);
+    throw new AppError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to delete file from Cloudinary"
+    );
+  }
+}
 
 export const fileUploader = {
   upload,
   uploadToCloudinary,
+  deleteFromCloudinary
 }
 
