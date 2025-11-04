@@ -3,3 +3,13 @@ enum Role {
   HR
   EMPLOYEE
 }
+
+enum OrganizationStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  SUSPENDED
+  BLOCKED
+  ARCHIVED
+}
+
