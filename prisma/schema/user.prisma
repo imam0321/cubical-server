@@ -1,0 +1,40 @@
+model User {
+  id                 String        @id @default(uuid())
+  slug               String        @unique
+  email              String        @unique
+  password           String
+  role               Role          @default(EMPLOYEE)
+  needPasswordChange Boolean       @default(true)
+  lastLogin          DateTime?
+  status             UserStatus    @default(ACTIVE)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  Employee           Employee?
+  Organization       Organization?
+
+  @@map("users")
+}
+
+model Employee {
+  id             String       @id @default(uuid())
+  slug           String       @unique
+  name           String
+  email          String       @unique
+  position       String?
+  addressId      String
+  address        Address      @relation(fields: [addressId], references: [id])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  departmentId   String
+  department     Department   @relation(fields: [departmentId], references: [id])
+  branchId       String
+  branch         Branch       @relation(fields: [branchId], references: [id])
+  isActive       Boolean      @default(true)
+  dateOfJoining  DateTime
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  user User @relation(fields: [id], references: [id])
+
+  @@map("employees")
+}

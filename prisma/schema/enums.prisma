@@ -1,6 +1,7 @@
 enum Role {
   ADMIN
   HR
+  BRANCH_MANAGER
   EMPLOYEE
 }
 
@@ -13,3 +14,11 @@ enum OrganizationStatus {
   ARCHIVED
 }
 
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  PENDING
+  SUSPENDED
+  BLOCKED
+  ARCHIVED
+}
