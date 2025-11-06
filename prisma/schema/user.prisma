@@ -27,8 +27,6 @@ model Employee {
   organization   Organization @relation(fields: [organizationId], references: [id])
   departmentId   String
   department     Department   @relation(fields: [departmentId], references: [id])
-  branchId       String
-  branch         Branch       @relation(fields: [branchId], references: [id])
   isActive       Boolean      @default(true)
   dateOfJoining  DateTime
   createdAt      DateTime     @default(now())

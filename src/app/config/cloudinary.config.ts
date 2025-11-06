@@ -26,14 +26,14 @@ const upload = multer({
     if (allowedMimeTypes.includes(file.mimetype)) {
       cb(null, true)
     } else {
-      cb(new Error("'Only image files (JPEG, PNG, GIF, WebP) are allowed!'"))
+      cb(new Error("Only image files (JPEG, PNG, GIF, WebP) are allowed!"))
     }
   }
 });
 
 // Upload to Cloudinary
 const uploadToCloudinary = async (file: Express.Multer.File): Promise<UploadApiResponse> => {
-  if (!file?.buffer) throw new AppError(httpStatus.NOT_FOUND, "No file path found for upload");
+  if (!file?.buffer) throw new AppError(httpStatus.BAD_REQUEST, "No file path found for upload");
 
   try {
     const result = await new Promise<UploadApiResponse>((resolve, reject) => {
@@ -55,7 +55,7 @@ const uploadToCloudinary = async (file: Express.Multer.File): Promise<UploadApiR
     return result;
   } catch (error) {
     console.error("Cloudinary upload failed:", error);
-    throw new AppError(httpStatus.BAD_REQUEST, "Failed to upload file to Cloudinary");
+    throw new AppError(httpStatus.BAD_REQUEST, `Failed to upload file to Cloudinary: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 };
 
